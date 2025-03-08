@@ -1,6 +1,8 @@
 .DS_Store
 data_a/
+data_b/
 dataset3a/
 dataset3b/
 __pycache__/
 wandb/
+dataset/
