@@ -1,44 +1,42 @@
-import os
-import shutil
-from sklearn.model_selection import train_test_split
-from constants import DATA_A_PATH,LR,HR,SPLIT_DATA_PATH_A
-# Define dataset paths
-dataset_root = DATA_A_PATH # Change this to your dataset path
-lr_dir = os.path.join(dataset_root, LR)
-hr_dir = os.path.join(dataset_root, HR)
+from torchvision import transforms
+from PIL import Image
+class LensDataPreprocessor:
+    def __init__(self, crop_size=75, scale_factor=2):
+        self.train_transform = transforms.Compose([
+            transforms.RandomChoice([
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip()
+            ]),
+            transforms.RandomRotation(15),
+            transforms.RandomCrop(crop_size*scale_factor),
+            transforms.Lambda(lambda x: self._degrade(x, scale_factor)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.5], std=[0.5])
+        ])
+        
+        self.val_transform = transforms.Compose([
+            transforms.CenterCrop(crop_size*scale_factor),
+            transforms.Lambda(lambda x: self._degrade(x, scale_factor)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.5], std=[0.5])
+        ])
 
-# Define output directories
-output_root = SPLIT_DATA_PATH_A  # Change this to your desired output path
-train_lr_dir = os.path.join(output_root, "train", LR)
-train_hr_dir = os.path.join(output_root, "train", HR)
-val_lr_dir = os.path.join(output_root, "val", LR)
-val_hr_dir = os.path.join(output_root, "val", HR)
+    def _degrade(self, hr, scale_factor):
+        """Generate LR from HR using bicubic downsampling"""
+        lr_size = (hr.size[1]//scale_factor, hr.size[0]//scale_factor)
+        return hr.resize(lr_size, Image.BICUBIC)
 
-# Create train/val directories
-for dir_path in [train_lr_dir, train_hr_dir, val_lr_dir, val_hr_dir]:
-    os.makedirs(dir_path, exist_ok=True)
+    def get_transforms(self):
+        return {
+            'train': PairedTransform(self.train_transform),
+            'val': PairedTransform(self.val_transform)
+        }
 
-# Get all sample file names
-lr_files = sorted(os.listdir(lr_dir))  # Ensure matching order
-hr_files = sorted(os.listdir(hr_dir))
-
-# Ensure pairs match
-assert len(lr_files) == len(hr_files), "Mismatch in LR and HR files!"
-
-# Split dataset (90% train, 10% val)
-train_lr, val_lr, train_hr, val_hr = train_test_split(
-    lr_files, hr_files, test_size=0.1, random_state=42
-)
-
-# Function to copy files
-def move_files(files, src_dir, dest_dir):
-    for file in files:
-        shutil.copy(os.path.join(src_dir, file), os.path.join(dest_dir, file))
-
-# Move files to respective directories
-move_files(train_lr, lr_dir, train_lr_dir)
-move_files(train_hr, hr_dir, train_hr_dir)
-move_files(val_lr, lr_dir, val_lr_dir)
-move_files(val_hr, hr_dir, val_hr_dir)
-
-print("Dataset split completed successfully!")
+class PairedTransform:
+    def __init__(self, transform):
+        self.transform = transform
+        
+    def __call__(self, hr):
+        lr = self.transform(hr)
+        hr = self.transform(hr)
+        return lr, hr

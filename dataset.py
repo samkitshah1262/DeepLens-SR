@@ -24,8 +24,8 @@ class LensDataset(torch.utils.data.Dataset):
         hr = np.load(os.path.join(self.hr_dir, self.hr_files[idx]))
 
         # Convert to torch tensors
-        lr = torch.tensor(lr, dtype=torch.float32).unsqueeze(0)  # Add channel dim
-        hr = torch.tensor(hr, dtype=torch.float32).unsqueeze(0)  
+        lr = torch.tensor(lr, dtype=torch.float32)
+        hr = torch.tensor(hr, dtype=torch.float32) 
 
         # Apply transforms if provided
         if self.transform:
@@ -33,6 +33,9 @@ class LensDataset(torch.utils.data.Dataset):
             hr = self.transform(hr)
 
         return lr, hr
+    
+
+
 
 # set_images_lr = []
 # for i in range(10):

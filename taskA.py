@@ -7,15 +7,17 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from trainer import Trainer
 from constants import PATH_TRAIN_HR,PATH_TRAIN_LR,PATH_VAL_HR,PATH_VAL_LR,WANDB_PROJECT,WANDB_USERNAME
+from loss import HybridLoss
+from preprocess import LensDataPreprocessor
 
 def train_model(config):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
+
+    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    print(device)
     model = Equiformer(
         dim=config['dim'],
         num_blocks=config['num_blocks'],
         num_heads=config['num_heads'],
-        upscale=config['upscale']
     )
     
     optimizer = torch.optim.AdamW(
@@ -32,8 +34,11 @@ def train_model(config):
         verbose=True
     )
     
-    criterion = nn.L1Loss()
+    criterion = HybridLoss(device=device)
     
+    # preprocessor = LensDataPreprocessor(crop_size=75)
+    # transforms = preprocessor.get_transforms()
+
     train_dataset = LensDataset(
         lr_dir=config['train_lr_dir'],
         hr_dir=config['train_hr_dir'],
@@ -50,7 +55,7 @@ def train_model(config):
         train_dataset,
         batch_size=config['batch_size'],
         shuffle=True,
-        num_workers=4,
+        num_workers=0,
         pin_memory=True
     )
     
@@ -58,19 +63,10 @@ def train_model(config):
         val_dataset,
         batch_size=config['batch_size'],
         shuffle=False,
-        num_workers=4,
+        num_workers=0,
         pin_memory=True
     )
     
-    # config.update({
-    #     'wandb_project': 'ml4sci-superres',
-    #     'wandb_entity': 'your-username',
-    #     'tags': ['equiformer', 'lensing', 'super-resolution'],
-    #     'log_interval': 50,
-    #     'sample_interval': 200
-    # })
-
-    # Initialize trainer
     trainer = Trainer(
         model=model,
         train_loader=train_loader,
@@ -79,6 +75,7 @@ def train_model(config):
         criterion=criterion,
         device=device,
         scheduler=scheduler,
+        config=config,
         use_amp=config['use_amp']
     )
     
@@ -89,9 +86,10 @@ def train_model(config):
             val_loss = trainer.validate(epoch)
 
             # Early stopping
-            if epoch - trainer.best_epoch > config['patience']:
+            if (epoch - trainer.best_epoch) > config['patience']:
                 print(f"Early stopping at epoch {epoch}")
                 break
+
 
 
     finally:
@@ -99,10 +97,10 @@ def train_model(config):
 
 # Example configuration
 config = {
-    'dim': 75,
+    'dim': 64,
     'num_blocks': 8,
     'num_heads': 4,
-    'upscale': 4,
+    'upscale': 2,
     'lr': 1e-4,
     'weight_decay': 1e-4,
     'batch_size': 16,
@@ -114,14 +112,13 @@ config = {
     'val_lr_dir': PATH_VAL_LR,
     'val_hr_dir': PATH_VAL_HR,
     'transform': transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+        transforms.Normalize(mean=[0.5], std=[0.5]) 
     ]),
     'wandb_project': WANDB_PROJECT,
     'wandb_entity': WANDB_USERNAME,
     'tags': ['gsoc2025', 'diffilens'],
     'log_interval': 50,
-    'sample_interval': 100,
+    'sample_interval': 200,
     'architecture': 'Equiformer'
 }
 

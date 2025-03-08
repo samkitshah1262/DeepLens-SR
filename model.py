@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch.nn.functional as F
 
 class GroupConv(nn.Module):
     """Equivariant group convolution layer"""
@@ -71,9 +72,9 @@ class EquiformerBlock(nn.Module):
         return x
 
 class Equiformer(nn.Module):
-    """Equivariant Transformer for Super-Resolution"""
-    def __init__(self, in_channels=3, out_channels=3, dim=64, 
-                 num_blocks=8, num_heads=4, groups=4, upscale=4):
+    """Equivariant Transformer for 2× Super-Resolution"""
+    def __init__(self, in_channels=1, out_channels=1, dim=64, 
+                 num_blocks=8, num_heads=4, groups=4):
         super().__init__()
         self.embed = nn.Conv2d(in_channels, dim, 3, padding=1)
         
@@ -82,14 +83,17 @@ class Equiformer(nn.Module):
             for _ in range(num_blocks)
         ])
         
+        # Modified for 2× upscaling
         self.upsampler = nn.Sequential(
-            nn.Conv2d(dim, dim * upscale**2, 3, padding=1),
-            nn.PixelShuffle(upscale),
+            nn.Conv2d(dim, dim * 4, 3, padding=1),  # 2² = 4 channels for PixelShuffle
+            nn.PixelShuffle(2),  # 2× upscale
             nn.Conv2d(dim, out_channels, 3, padding=1)
         )
         
     def forward(self, x):
+        x_low = x
         x = self.embed(x)
         x = self.blocks(x)
         x = self.upsampler(x)
-        return x
+        return x + F.interpolate(x_low, scale_factor=2, mode='bilinear')  
+        

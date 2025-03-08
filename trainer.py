@@ -5,6 +5,7 @@ from torch.cuda.amp import autocast, GradScaler
 from metrics import calculate_psnr, calculate_ssim
 from logger import WandBLogger
 import wandb
+from torch.nn import functional as F
 
 class Trainer:
     def __init__(self, model, train_loader, val_loader, 
@@ -17,17 +18,20 @@ class Trainer:
         self.criterion = criterion
         self.device = device
         self.scheduler = scheduler
-        self.scaler = GradScaler('cuda', enabled=use_amp)
+        self.scaler = GradScaler(device, enabled=use_amp)
         self.best_val_loss = float('inf')
         self.logger = WandBLogger(config, model)
         self.log_interval = config.get('log_interval', 50)
         self.sample_interval = config.get('sample_interval', 200)
+        self.best_val_loss = float('inf')
+        self.best_epoch = 0 
         
     def train_epoch(self, epoch):
         self.model.train()
         total_loss = 0.0
         psnr_values = []
         ssim_values = []
+        mse_values = []
         start_time = time.time()
         
         for batch_idx, (lr, hr) in enumerate(self.train_loader):
@@ -36,7 +40,7 @@ class Trainer:
             
             self.optimizer.zero_grad(set_to_none=True)
             
-            with autocast('cuda',enabled=self.scaler.is_enabled()):
+            with autocast(enabled=self.scaler.is_enabled()):
                 outputs = self.model(lr)
                 loss = self.criterion(outputs, hr)
                 
@@ -47,14 +51,17 @@ class Trainer:
             self.scaler.update()
             
             total_loss += loss.item()
+            batch_mse = F.mse_loss(outputs, hr).item()
             batch_psnr = calculate_psnr(outputs, hr)
             batch_ssim = calculate_ssim(outputs, hr)
             psnr_values.append(batch_psnr)
             ssim_values.append(batch_ssim)
-            
+            mse_values.append(batch_mse)
+
             if batch_idx % self.log_interval == 0:
                 self.logger.log_metrics({
                     "train/loss": loss.item(),
+                    "train/batch_mse": batch_mse,
                     "train/batch_psnr": batch_psnr,
                     "train/batch_ssim": batch_ssim,
                     "lr": self.optimizer.param_groups[0]['lr']
@@ -67,11 +74,13 @@ class Trainer:
         avg_loss = total_loss / len(self.train_loader)
         avg_psnr = np.mean(psnr_values)
         avg_ssim = np.mean(ssim_values)
+        avg_mse = np.mean(mse_values)
         epoch_time = time.time() - start_time
         
         self.logger.log_metrics({
             "epoch": epoch,
             "train/avg_loss": avg_loss,
+            "train/epoch_mse": avg_mse,
             "train/avg_psnr": avg_psnr,
             "train/avg_ssim": avg_ssim,
             "epoch_time": epoch_time
@@ -82,6 +91,7 @@ class Trainer:
     def validate(self, epoch):
         self.model.eval()
         total_loss = 0.0
+        mse_values = []
         psnr_values = []
         ssim_values = []
         start_time = time.time()
@@ -94,16 +104,19 @@ class Trainer:
             loss = self.criterion(outputs, hr)
             
             total_loss += loss.item()
+            mse_values.append(F.mse_loss(outputs, hr).item())
             psnr_values.append(calculate_psnr(outputs, hr))
             ssim_values.append(calculate_ssim(outputs, hr))
             
         avg_loss = total_loss / len(self.val_loader)
         avg_psnr = np.mean(psnr_values)
         avg_ssim = np.mean(ssim_values)
+        avg_mse = np.mean(mse_values)
         epoch_time = time.time() - start_time
         
         self.logger.log_metrics({
             "val/loss": avg_loss,
+            "val/mse": avg_mse,
             "val/psnr": avg_psnr,
             "val/ssim": avg_ssim,
             "epoch_time": epoch_time
@@ -116,6 +129,7 @@ class Trainer:
         # Save best model
         if avg_loss < self.best_val_loss:
             self.best_val_loss = avg_loss
+            self.best_epoch = epoch
             torch.save({
                 'epoch': epoch,
                 'model_state_dict': self.model.state_dict(),
