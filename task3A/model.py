@@ -77,8 +77,7 @@ class Equiformer(nn.Module):
             EquiformerBlock(dim, num_heads, groups)
             for _ in range(num_blocks)
         ])
-        
-        # Modified for 2× upscaling
+
         self.upsampler = nn.Sequential(
             nn.Conv2d(dim, dim * 4, 3, padding=1),  # 2² = 4 channels for PixelShuffle
             nn.PixelShuffle(2),  # 2× upscale

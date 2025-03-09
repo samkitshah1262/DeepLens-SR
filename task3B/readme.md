@@ -4,6 +4,11 @@ For this task I finetuned the pre-trained model for the prior task. Moreover , I
   
 [Sparse MoE](https://arxiv.org/pdf/2212.05055) 
 
+Reasons to choose Dynamic MoE 
+- Specialized experts learn distinct features (e.g., one expert for noise suppression, another for arc reconstruction).
+- The gating network dynamically combines experts based on input patches, enabling localized specialization.
+- Sparse activation: Only 1–2 experts process each input patch, reducing FLOPs by 40–60% vs. dense transformers.
+- Parameter reuse: Shared encoder layers leverage simulated data features, while experts specialize for real data.
 
 ## Model details 
 
