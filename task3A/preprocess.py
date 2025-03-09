@@ -22,7 +22,6 @@ class LensDataPreprocessor:
         ])
 
     def _degrade(self, hr, scale_factor):
-        """Generate LR from HR using bicubic downsampling"""
         lr_size = (hr.size[1]//scale_factor, hr.size[0]//scale_factor)
         return hr.resize(lr_size, Image.BICUBIC)
 

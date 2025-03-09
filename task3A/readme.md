@@ -1,8 +1,7 @@
 ## Model Selection
 For this task I had studied a variety of family of models including Transformer, Diffusion based models
 Things I considered while studying and selecting models
-For this task, we explored several deep learning architectures specialized in image super-resolution (SR), 
-prioritizing models that could handle:
+for this task prioritizing models that could handle:
 - **Geometric equivariance** (critical for astronomical images)
 - **Limited training data** (300 real pairs in Task III.B)
 - **Domain adaptation** (simulated → real data)
@@ -38,7 +37,7 @@ Although these models have performed remarkably well, they have already been exp
    - Gradual noise-to-image refinement over 1000 steps  
    - Outperforms GANs on perceptual metrics (LPIPS)  
 
-These models looked very promising but requires very high compute. Would like to study them further.
+These models looked very promising but requires very high compute and data. Would like to study them further.
 
 ### Approach
 
@@ -90,11 +89,13 @@ From the results it is evident that, Transformer based architectures produce fai
 
 ## Conclusion
 
-For the scope of this task I explored effectiveness of a novel transformer based single image super resolution algorithm. The results are promising for first iteration of implementation. 
+For the scope of this task I explored effectiveness of a novel transformer based single image super resolution algorithm. The results are promising for first iteration of implementation. They have some critical limitations that need to be addressed
+- Fails to capture reconstruction uncertainty
+
 
 ## Possible future work
 
-- [ ] Explore effective daa augmentation techniques
+- [ ] Explore effective data augmentation techniques
 - [ ] Explore other Loss functions
 - [ ] Perform parameter tuning
 - [ ] Benchmark generated images on different tasks

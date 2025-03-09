@@ -125,8 +125,7 @@ class Trainer:
         self.logger.log_metrics({
             "val_output_dist": wandb.Histogram(outputs.cpu().numpy())
         })
-        
-        # Save best model
+
         if avg_loss < self.best_val_loss:
             self.best_val_loss = avg_loss
             self.best_epoch = epoch
@@ -142,8 +141,7 @@ class Trainer:
                 'val_loss': avg_loss,
                 'val_psnr': avg_psnr
             })
-            
-        # Update learning rate
+
         if self.scheduler is not None:
             self.scheduler.step(avg_loss)
             

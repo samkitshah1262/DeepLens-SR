@@ -2,7 +2,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class GroupConv(nn.Module):
-    """Equivariant group convolution layer"""
     def __init__(self, in_channels, out_channels, kernel_size, groups=4):
         super().__init__()
         self.groups = groups
@@ -16,7 +15,6 @@ class GroupConv(nn.Module):
         return x.view(b, -1, h, w)
 
 class EquivariantAttention(nn.Module):
-    """Equivariant self-attention module"""
     def __init__(self, dim, num_heads=4, groups=4, qkv_bias=False):
         super().__init__()
         self.num_heads = num_heads
@@ -43,7 +41,6 @@ class EquivariantAttention(nn.Module):
         return x + x
 
 class EquivariantFFN(nn.Module):
-    """Equivariant feed-forward network"""
     def __init__(self, dim, expansion=4, groups=4):
         super().__init__()
         hidden_dim = dim * expansion
@@ -58,7 +55,6 @@ class EquivariantFFN(nn.Module):
         return self.net(self.norm(x)) + x
 
 class EquiformerBlock(nn.Module):
-    """Equivariant transformer block"""
     def __init__(self, dim, num_heads, groups=4, mlp_expansion=4):
         super().__init__()
         self.attn = EquivariantAttention(dim, num_heads, groups)
@@ -72,7 +68,6 @@ class EquiformerBlock(nn.Module):
         return x
 
 class Equiformer(nn.Module):
-    """Equivariant Transformer for 2× Super-Resolution"""
     def __init__(self, in_channels=1, out_channels=1, dim=64, 
                  num_blocks=8, num_heads=4, groups=4):
         super().__init__()

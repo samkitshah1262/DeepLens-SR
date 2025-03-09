@@ -55,7 +55,6 @@ class DyMoETrainer:
             pred = self.model(lr)
             loss = self.criterion(pred, hr)
 
-            # Sparsity regularization
             gate_weights = self.model.gate[3](self.model.gate[2](self.model.gate[1](self.model.gate[0](self.model.embed(lr)))))
             batch_sparsity_loss = torch.mean(torch.sum(gate_weights**2, dim=1))
             total_loss += (loss + self.config['sparsity_lambda'] * batch_sparsity_loss).item()
@@ -64,8 +63,7 @@ class DyMoETrainer:
             self.scaler.scale(loss + self.config['sparsity_lambda'] * batch_sparsity_loss).backward()
             self.scaler.unscale_(self.optimizer)
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
-            
-            # Update weights
+
             self.scaler.step(self.optimizer)
             self.scaler.update()
             with torch.no_grad():
@@ -155,7 +153,6 @@ class DyMoETrainer:
             "val_output_dist": wandb.Histogram(outputs.cpu().numpy())
         })
         
-        # Save best model
         if avg_loss < self.best_val_loss:
             self.best_val_loss = avg_loss
             self.best_epoch = epoch
@@ -171,8 +168,7 @@ class DyMoETrainer:
                 'val_loss': avg_loss,
                 'val_psnr': avg_psnr
             })
-            
-        # Update learning rate
+
         if self.scheduler is not None:
             self.scheduler.step(avg_loss)
             

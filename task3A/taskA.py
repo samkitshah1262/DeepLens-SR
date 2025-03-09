@@ -76,8 +76,7 @@ def train_model(config):
         config=config,
         use_amp=config['use_amp']
     )
-    
-    # Training loop
+
     try:
         for epoch in range(1, config['epochs'] + 1):
             train_loss = trainer.train_epoch(epoch)
@@ -93,7 +92,6 @@ def train_model(config):
     finally:
         trainer.logger.finish()
 
-# Example configuration
 config = {
     'dim': 64,
     'num_blocks': 8,
@@ -120,5 +118,4 @@ config = {
     'architecture': 'Equiformer'
 }
 
-# Start training
 train_model(config)
