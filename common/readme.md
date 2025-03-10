@@ -25,14 +25,14 @@ Epochs - 150 \
 
 ## Results
 
-Run reports for wandb can be found [CNN](https://api.wandb.ai/links/samkitshah1262-warner-bros-discovery/32panvs8) and [ENB3](https://api.wandb.ai/links/samkitshah1262-warner-bros-discovery/9k4945xy)
+Run reports for wandb can be found [CNN](https://api.wandb.ai/links/samkitshah1262-warner-bros-discovery/32panvs8) and [ENB3](https://api.wandb.ai/links/samkitshah1262-warner-bros-discovery/agqqjvft)
 
 
 ## Analysis
 
 | Model | AUC |
 | --- | --- | 
-| EfficientNet | 0.96701 |	
+| EfficientNet | 0.9937 |	
 | CNN | 0.9873 |
 
 
