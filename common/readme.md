@@ -27,6 +27,7 @@ Epochs - 150 \
 
 Run reports for wandb can be found [CNN](https://api.wandb.ai/links/samkitshah1262-warner-bros-discovery/32panvs8) and [ENB3](https://api.wandb.ai/links/samkitshah1262-warner-bros-discovery/agqqjvft)
 
+![Confusion Matrix](../assets/cm.png)
 
 ## Analysis
 
