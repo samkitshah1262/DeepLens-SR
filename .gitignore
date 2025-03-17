@@ -6,3 +6,7 @@ dataset3b/
 __pycache__/
 wandb/
 dataset/
+*.zip
+lens-finding-test/
+*.pth
+
