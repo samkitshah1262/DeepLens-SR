@@ -1,0 +1,6 @@
+Dataset/
+Dataset2/
+wandb/
+*.zip
+.DS_Store
+*.pth
